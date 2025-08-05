@@ -48,8 +48,8 @@ export class GeminiService {
   private chatSession: any;          // チャットセッション
 
   constructor() {
-    // Gemini 2.0 Flash Experimentalモデルを使用
-    this.model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    // Gemini 1.5 Flashモデルを使用（より安定）
+    this.model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   }
 
   /**
@@ -103,17 +103,6 @@ export class GeminiService {
       await this.initializeChat();
     }
 
-    // 初期分析用のプロンプト
-
-    // 👇ここでは、経営報告の初期分析をAIに依頼するためのプロンプトを定義
-    // const prompt = `
-    // この経営報告の初期分析を提供してください。以下の点について簡潔に説明してください：
-    // 1. 全体的な業績評価
-    // 2. 注目すべき良い点
-    // 3. 改善が必要な領域
-    // 4. 今後の重点施策の提案
-    // `;
-
     const prompt = `
     提供される情報データをもとに、ゲーム運営に詳しくないお客様にも分かりやすく、以下の点について丁寧に解説してください：
 
@@ -123,9 +112,35 @@ export class GeminiService {
     4. 今後の運営戦略に向けた具体的な提案（例：ターゲット広告、時間帯別イベント、特定エリア向け施策）
     `;
 
-    // AIに分析を依頼
-    const result = await this.chatSession.sendMessage(prompt);
-    return result.response.text();
+    // リトライロジックを実装
+    let retries = 3;
+    let lastError;
+    
+    while (retries > 0) {
+      try {
+        // AIに分析を依頼
+        const result = await this.chatSession.sendMessage(prompt);
+        return result.response.text();
+      } catch (error: any) {
+        lastError = error;
+        
+        // 503エラー（過負荷）の場合は少し待機してリトライ
+        if (error.status === 503) {
+          retries--;
+          if (retries > 0) {
+            // 1秒待機してからリトライ
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+        }
+        
+        // その他のエラーはそのままスロー
+        throw error;
+      }
+    }
+    
+    // すべてのリトライが失敗した場合
+    throw lastError;
   }
 
   /**
@@ -139,8 +154,34 @@ export class GeminiService {
       await this.initializeChat();
     }
 
-    // メッセージをAIに送信してレスポンスを取得
-    const result = await this.chatSession.sendMessage(message);
-    return result.response.text();
+    // リトライロジックを実装
+    let retries = 3;
+    let lastError;
+    
+    while (retries > 0) {
+      try {
+        // メッセージをAIに送信してレスポンスを取得
+        const result = await this.chatSession.sendMessage(message);
+        return result.response.text();
+      } catch (error: any) {
+        lastError = error;
+        
+        // 503エラー（過負荷）の場合は少し待機してリトライ
+        if (error.status === 503) {
+          retries--;
+          if (retries > 0) {
+            // 1秒待機してからリトライ
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+        }
+        
+        // その他のエラーはそのままスロー
+        throw error;
+      }
+    }
+    
+    // すべてのリトライが失敗した場合
+    throw lastError;
   }
 }
