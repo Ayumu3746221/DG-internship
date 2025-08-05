@@ -1,5 +1,8 @@
 import type { MockAPIResponse } from "../types/MockAPI.js";
 import type { Transaction } from "../types/Transaction.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 function convertUnixToDate(unixTimestamp: number): Date {
   return new Date(unixTimestamp);
@@ -13,7 +16,7 @@ function convertUnixToDate(unixTimestamp: number): Date {
 export async function fetchAndPrepareData(
   appId: string
 ): Promise<Map<string, Transaction[]>> {
-  const BASE_URL = "https://tjufwmnunr.ap-northeast-1.awsapprunner.com/api/v1";
+  const BASE_URL = process.env.BASE_URL;
   const MOCK_API_URL = `${BASE_URL}/orders`;
   const url = new URL(MOCK_API_URL);
 

@@ -62,7 +62,7 @@ app.get("/api/:appId/ltv/chart-data", async (c) => {
 });
 
 // デバッグ用ルーティングを設定
-app.route("/debug", debug);
+app.route("/api/debug", debug);
 
 // チャット関連のルーティングを設定
 app.route("/api/chat", chatRouter);
