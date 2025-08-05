@@ -77,15 +77,15 @@ export const DemographicsGraph = ({ selectedAppId, selectedPeriod }) => {
           <svg width="100%" height="300" viewBox="0 0 500 300">
             {/* 性別比率の円グラフ */}
             <g transform="translate(120, 150)">
-              {/* 男性部分 (65%) */}
+              {/* 男性部分 (65% = 234度) */}
               <path
-                d="M 0,-60 A 60,60 0 1,1 37.08,46.35 L 0,0 Z"
+                d="M 0,-60 A 60,60 0 1,1 -35.29,48.54 L 0,0 Z"
                 fill={color}
                 opacity="0.8"
               />
-              {/* 女性部分 (35%) */}
+              {/* 女性部分 (35% = 126度) */}
               <path
-                d="M 37.08,46.35 A 60,60 0 0,1 0,-60 L 0,0 Z"
+                d="M -35.29,48.54 A 60,60 0 0,1 0,-60 L 0,0 Z"
                 fill="#dc3545"
                 opacity="0.6"
               />
