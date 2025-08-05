@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ChatPage from './pages/ChatPage';
 import "./App.css";
+import { Dashboard } from './components/layout/Dashboard';
 
 /**
  * メインアプリケーションコンポーネント
@@ -11,7 +12,7 @@ function App() {
     <Router>
       <Routes>
         {/* ルートパス：ホームページ（データ可視化とチャット選択） */}
-          <Route path="/" element={<div>Hello World</div>} />
+          <Route path="/" element={<Dashboard />} />
           
           {/* チャットパス：AI分析チャットページ */}
         <Route path="/chat" element={<ChatPage />} />
