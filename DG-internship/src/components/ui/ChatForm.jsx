@@ -6,23 +6,19 @@ import {
   TextField,
   IconButton,
   Avatar,
-  Chip,
   CircularProgress,
-  Divider
+  Divider,
+  Button
 } from '@mui/material';
-import { Send, SmartToy, Person, Psychology } from '@mui/icons-material';
+import { Send, SmartToy, Person, Psychology, Refresh } from '@mui/icons-material';
+import { chatAPI } from '../../services/api';
 
 export const ChatForm = () => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: 'こんにちは！マーケティングデータ分析についてお気軽にご質問ください。LTV推移、売上分析、顧客属性など、データに基づいたアドバイスをお手伝いします。',
-      sender: 'ai',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [chatStarted, setChatStarted] = useState(false);
+  const [chatInitialized, setChatInitialized] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -33,12 +29,54 @@ export const ChatForm = () => {
     scrollToBottom();
   }, [messages]);
 
+  const startChat = async () => {
+    try {
+      setIsLoading(true);
+      setChatInitialized(true);
+      const response = await chatAPI.startChat();
+      
+      if (response.success) {
+        setChatStarted(true);
+        setMessages([{
+          id: crypto.randomUUID(),
+          text: response.data.analysis,
+          sender: 'ai',
+          timestamp: new Date()
+        }]);
+      }
+    } catch (error) {
+      console.error('Failed to start chat:', error);
+      const errorMessage = error.response?.data?.error || '申し訳ございません。チャットの開始に失敗しました。';
+      setMessages([{
+        id: crypto.randomUUID(),
+        text: errorMessage,
+        sender: 'ai',
+        timestamp: new Date()
+      }]);
+      
+      // 503エラーの場合は自動リトライ
+      if (error.response?.data?.details === 503) {
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            id: crypto.randomUUID(),
+            text: '再接続を試みています...',
+            sender: 'ai',
+            timestamp: new Date()
+          }]);
+          startChat();
+        }, 3000);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading || !chatStarted) return;
 
     const userMessage = {
-      id: Date.now(),
+      id: crypto.randomUUID(),
       text: inputValue,
       sender: 'user',
       timestamp: new Date()
@@ -48,30 +86,50 @@ export const ChatForm = () => {
     setInputValue('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      const responses = [
-        'データを分析すると、課金開始から7日以内のユーザーのLTVが特に高い傾向があります。この期間の体験向上に注力することをお勧めします。',
-        '曜日別の売上データを見ると、土日の課金額が平日より30%高くなっています。週末限定のキャンペーンを検討してみてはいかがでしょうか。',
-        '顧客属性分析では、20-30代男性の課金率が最も高いことが分かります。このセグメントに特化したコンテンツ展開が効果的でしょう。',
-        'ヘビー課金者の行動パターンを分析すると、特定の機能の利用率が高いことが判明しています。この機能の改善とプロモーションをお勧めします。'
-      ];
+    try {
+      const response = await chatAPI.sendMessage(inputValue);
       
-      const aiResponse = {
-        id: Date.now() + 1,
-        text: responses[Math.floor(Math.random() * responses.length)],
+      if (response.success) {
+        const aiResponse = {
+          id: crypto.randomUUID(),
+          text: response.data.response,
+          sender: 'ai',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiResponse]);
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      const errorText = error.response?.data?.error || 'メッセージの送信に失敗しました。もう一度お試しください。';
+      const errorMessage = {
+        id: crypto.randomUUID(),
+        text: errorText,
         sender: 'ai',
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
+  };
+
+  const resetChat = async () => {
+    try {
+      await chatAPI.resetChat();
+      setMessages([]);
+      setChatStarted(false);
+      setChatInitialized(false);
+      setInputValue('');
+    } catch (error) {
+      console.error('Failed to reset chat:', error);
+    }
   };
 
   return (
     <Paper 
       elevation={3}
       sx={{ 
-        height: '100%', 
+        height: '100%', // ビューポートに合わせて調整
         display: 'flex', 
         flexDirection: 'column',
         background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%)',
@@ -80,12 +138,13 @@ export const ChatForm = () => {
         overflow: 'hidden'
       }}
     >
-      {/* Header */}
+      {/* Header - 圧縮された固定高さ */}
       <Box
         sx={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          p: 3,
+          p: 2, // 3 → 2 に圧縮
           color: 'white',
+          flexShrink: 0, // ヘッダーのサイズを固定
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -93,35 +152,115 @@ export const ChatForm = () => {
             sx={{
               background: 'rgba(255,255,255,0.2)',
               backdropFilter: 'blur(10px)',
-              width: 48,
-              height: 48,
+              width: 40, // 48 → 40 に圧縮
+              height: 40, // 48 → 40 に圧縮
             }}
           >
             <Psychology />
           </Avatar>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}> {/* h6 → subtitle1 に圧縮 */}
               AIマーケティングアシスタント
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            <Typography variant="caption" sx={{ opacity: 0.9 }}> {/* body2 → caption に圧縮 */}
               データドリブンなアドバイスを提供
             </Typography>
           </Box>
+          {chatStarted && (
+            <IconButton
+              onClick={resetChat}
+              sx={{
+                color: 'white',
+                background: 'rgba(255,255,255,0.2)',
+                '&:hover': {
+                  background: 'rgba(255,255,255,0.3)',
+                },
+              }}
+              title="チャットをリセット"
+            >
+              <Refresh />
+            </IconButton>
+          )}
         </Box>
       </Box>
 
-      {/* Messages */}
+      {/* Messages - スクロール可能エリア */}
       <Box
         sx={{
           flex: 1,
           overflowY: 'auto',
+          overflowX: 'hidden',
           p: 2,
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
+          minHeight: 0, // フレックスアイテムが適切に縮小されるように
+          // カスタムスクロールバー
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'rgba(0,0,0,0.1)',
+            borderRadius: '10px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '10px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: 'linear-gradient(135deg, #5a72e3 0%, #6d4498 100%)',
+          },
         }}
       >
-        {messages.map((message) => (
+        {!chatInitialized ? (
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '100%',
+            flexDirection: 'column',
+            gap: 3
+          }}>
+            <SmartToy sx={{ fontSize: 60, color: 'primary.main' }} />
+            <Typography variant="h6" align="center" sx={{ fontWeight: 'bold' }}>
+              AI分析を開始
+            </Typography>
+            <Typography variant="body2" color="text.secondary" align="center" sx={{ maxWidth: 300 }}>
+              経営データをAIに送信し、分析を開始します。
+              AIが初期分析を提供した後、質問できるようになります。
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={startChat}
+              disabled={isLoading}
+              startIcon={<Psychology />}
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a72e3 0%, #6d4498 100%)',
+                },
+              }}
+            >
+              {isLoading ? '初期化中...' : 'チャットを開始'}
+            </Button>
+          </Box>
+        ) : !chatStarted && isLoading ? (
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '100%',
+            flexDirection: 'column',
+            gap: 2
+          }}>
+            <CircularProgress size={40} />
+            <Typography variant="body2" color="text.secondary">
+              チャットを初期化中...
+            </Typography>
+          </Box>
+        ) : (
+          messages.map((message) => (
           <Box
             key={message.id}
             sx={{
@@ -190,9 +329,10 @@ export const ChatForm = () => {
               </Avatar>
             )}
           </Box>
-        ))}
+          ))
+        )}
         
-        {isLoading && (
+        {isLoading && messages.length > 0 && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
             <Avatar
               sx={{
@@ -213,7 +353,7 @@ export const ChatForm = () => {
 
       <Divider />
       
-      {/* Input */}
+      {/* Input - 固定高さ */}
       <Box
         component="form"
         onSubmit={handleSubmit}
@@ -224,6 +364,7 @@ export const ChatForm = () => {
           alignItems: 'flex-end',
           background: 'rgba(255,255,255,0.8)',
           backdropFilter: 'blur(5px)',
+          flexShrink: 0, // 入力エリアのサイズを固定
         }}
       >
         <TextField
@@ -233,7 +374,7 @@ export const ChatForm = () => {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="データ分析について質問してください..."
-          disabled={isLoading}
+          disabled={isLoading || !chatInitialized}
           variant="outlined"
           size="small"
           sx={{
@@ -245,7 +386,7 @@ export const ChatForm = () => {
         />
         <IconButton
           type="submit"
-          disabled={!inputValue.trim() || isLoading}
+          disabled={!inputValue.trim() || isLoading || !chatInitialized}
           sx={{
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: 'white',

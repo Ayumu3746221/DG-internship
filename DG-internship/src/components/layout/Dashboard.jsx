@@ -75,7 +75,7 @@ export const Dashboard = () => {
     <ThemeProvider theme={theme}>
       <Box sx={{ minHeight: '100vh' }}>
         <AppBar position="static" elevation={0}>
-          <Toolbar sx={{ py: 2 }}>
+          <Toolbar sx={{ py: 1 }}>
             <Avatar 
               sx={{ 
                 bgcolor: 'primary.main', 
@@ -108,30 +108,29 @@ export const Dashboard = () => {
           </Toolbar>
         </AppBar>
 
-        <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} lg={8}>
-              <Paper sx={{ p: 4, mb: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'primary.dark' }}>
+        <Container maxWidth="xl" sx={{ py: 2, height: 'calc(100vh - 80px)' }}>
+          <Grid container spacing={3} sx={{ height: '100%' }}>
+            {/* 左側エリア: 分析設定 + グラフ (2/3幅 = 8/12) */}
+            <Grid size={{ xs: 12, lg: 8 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              {/* 分析設定エリア - 高さを圧縮 */}
+              <Paper sx={{ p: 2, mb: 2, flexShrink: 0 }}>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'primary.dark', mb: 1 }}>
                   分析設定
                 </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                  アプリケーション、期間、分析タイプを選択してデータを可視化
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={4}>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <AppSelector
                       selectedAppId={selectedAppId}
                       onAppChange={setSelectedAppId}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <PeriodSelector
                       selectedPeriod={selectedPeriod}
                       onPeriodChange={setSelectedPeriod}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <GraphTabs
                       activeTab={activeTab}
                       onTabChange={setActiveTab}
@@ -140,18 +139,19 @@ export const Dashboard = () => {
                 </Grid>
               </Paper>
               
-              {/* グラフエリア */}
-              <GraphContainer 
-                activeTab={activeTab}
-                selectedAppId={selectedAppId}
-                selectedPeriod={selectedPeriod}
-              />
+              {/* グラフエリア - 残り空間を使用 */}
+              <Box sx={{ flex: 1, minHeight: 0 }}>
+                <GraphContainer 
+                  activeTab={activeTab}
+                  selectedAppId={selectedAppId}
+                  selectedPeriod={selectedPeriod}
+                />
+              </Box>
             </Grid>
             
-            <Grid item xs={12} lg={4}>
-              <Box sx={{ height: '700px' }}>
-                <ChatForm />
-              </Box>
+            {/* 右側エリア: チャットフォーム (1/3幅 = 4/12) */}
+            <Grid size={{ xs: 12, lg: 4 }} sx={{ height: '100%' }}>
+              <ChatForm />
             </Grid>
           </Grid>
         </Container>
