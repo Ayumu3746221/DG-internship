@@ -1,5 +1,5 @@
-import { Paper, Box, Typography, Chip } from '@mui/material';
-import { TrendingUp } from '@mui/icons-material';
+import { Paper, Box, Typography, Chip } from "@mui/material";
+import { TrendingUp } from "@mui/icons-material";
 import {
   LineChart,
   Line,
@@ -9,16 +9,39 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
+import useSWR from "swr";
 
-const chartData = [
-  { day: '1日', light: 1200, middle: 4800, heavy: 12000 },
-  { day: '7日', light: 1550, middle: 6200, heavy: 15500 },
-  { day: '14日', light: 1700, middle: 7800, heavy: 18000 },
-  { day: '30日', light: 1850, middle: 9200, heavy: 22500 },
-  { day: '60日', light: 1950, middle: 10500, heavy: 26000 },
-  { day: '90日', light: 2100, middle: 11800, heavy: 29500 },
-];
+const fetcher = async (url) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Network response was not ok");
+  }
+  return response.json();
+};
+
+const transformChartData = (apiData) => {
+  console.log("Transforming chart data:", apiData);
+
+  if (!apiData || !Array.isArray(apiData)) return [];
+
+  return apiData.map(
+    (item, index) => (
+      console.log("Transforming item:", item),
+      {
+        day: new Date(item.date).toLocaleString("ja-JP", {
+          month: "short",
+          day: "numeric",
+        }),
+        date: item.date,
+        heavy: item.high,
+        middle: item.middle,
+        light: item.low,
+        total: item.high + item.middle + item.low,
+      }
+    )
+  );
+};
 
 // 2. Y軸の数値を「¥12K」のような形式にフォーマットする関数
 const formatYAxis = (tickItem) => `¥${tickItem / 1000}K`;
@@ -27,8 +50,18 @@ const formatYAxis = (tickItem) => `¥${tickItem / 1000}K`;
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <Paper elevation={4} sx={{ p: 2, background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(5px)' }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>{`${label}時点`}</Typography>
+      <Paper
+        elevation={4}
+        sx={{
+          p: 2,
+          background: "rgba(255, 255, 255, 0.9)",
+          backdropFilter: "blur(5px)",
+        }}
+      >
+        <Typography
+          variant="subtitle2"
+          sx={{ mb: 1 }}
+        >{`${label}時点`}</Typography>
         {payload.map((p) => (
           <Typography key={p.name} variant="body2" sx={{ color: p.color }}>
             {`${p.name}: ${p.value.toLocaleString()}円`}
@@ -41,14 +74,81 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
-  const color = '#667eea';
+  const color = "#667eea";
+
+  const { data, error, isLoading } = useSWR(
+    selectedAppId
+      ? `http://localhost:3000/api/${selectedAppId}/ltv/chart-data`
+      : null,
+    fetcher,
+    {
+      refreshInterval: 0, // 自動更新を無効化
+      revalidateOnFocus: false,
+    }
+  );
+
+  // チャートデータを変換
+  const chartData = data?.success ? transformChartData(data.chartData) : [];
+
+  // 統計情報を計算
+  const stats =
+    chartData.length > 0
+      ? {
+          totalDays: chartData.length,
+          avgHeavy: Math.round(
+            chartData.reduce((sum, item) => sum + item.heavy, 0) /
+              chartData.length
+          ),
+          avgMiddle: Math.round(
+            chartData.reduce((sum, item) => sum + item.middle, 0) /
+              chartData.length
+          ),
+          avgLight: Math.round(
+            chartData.reduce((sum, item) => sum + item.light, 0) /
+              chartData.length
+          ),
+          maxTotal: Math.max(...chartData.map((item) => item.total)),
+          minTotal: Math.min(...chartData.map((item) => item.total)),
+        }
+      : null;
+
+  // エラー状態
+  if (error) {
+    return (
+      <Paper elevation={3} sx={{ p: 4, height: "500px" }}>
+        <Alert severity="error">
+          データの取得に失敗しました: {error.message}
+        </Alert>
+      </Paper>
+    );
+  }
+
+  // アプリIDが選択されていない場合
+  if (!selectedAppId) {
+    return (
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          height: "500px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography variant="h6" color="text.secondary">
+          アプリを選択してください
+        </Typography>
+      </Paper>
+    );
+  }
 
   return (
-    <Paper 
+    <Paper
       elevation={3}
       sx={{ 
-        p: 4, 
-        height: '500px',
+        p: 2, 
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%)',
@@ -57,16 +157,16 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
       }}
     >
       {/* --- ヘッダー部分は変更なし --- */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
         <Box
           sx={{
             width: 48,
             height: 48,
             borderRadius: 2,
             background: `linear-gradient(135deg, ${color}20 0%, ${color}40 100%)`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             color: color,
           }}
         >
@@ -81,16 +181,22 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
           </Typography>
         </Box>
         {selectedAppId && selectedPeriod && (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Chip 
-              label={selectedAppId} 
-              size="small" 
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Chip
+              label={selectedAppId}
+              size="small"
               variant="outlined"
               sx={{ borderColor: color, color: color }}
             />
-            <Chip 
-              label={selectedPeriod === '1week' ? '1週間' : selectedPeriod === '1month' ? '1ヶ月' : '1年'} 
-              size="small" 
+            <Chip
+              label={
+                selectedPeriod === "1week"
+                  ? "1週間"
+                  : selectedPeriod === "1month"
+                  ? "1ヶ月"
+                  : "1年"
+              }
+              size="small"
               variant="outlined"
               sx={{ borderColor: color, color: color }}
             />
@@ -99,7 +205,7 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
       </Box>
 
       {/* --- グラフエリアをRechartsに置き換え --- */}
-      <Box sx={{ flex: 1, width: '100%', height: '100%' }}>
+      <Box sx={{ flex: 1, width: "100%", height: "100%" }}>
         <ResponsiveContainer>
           <LineChart
             data={chartData}
@@ -114,35 +220,39 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
             <XAxis dataKey="day" stroke="#666" />
             <YAxis stroke="#666" tickFormatter={formatYAxis} />
             <Tooltip content={<CustomTooltip />} />
-            <Legend formatter={(value) => <span style={{ color: '#333' }}>{value}</span>} />
-            <Line 
-              type="monotone" 
-              dataKey="light" 
-              name="ライト"
-              stroke="#667eea" 
-              strokeWidth={3} 
-              activeDot={{ r: 8 }} 
-              animationDuration={1500} 
+            <Legend
+              formatter={(value) => (
+                <span style={{ color: "#333" }}>{value}</span>
+              )}
             />
-            <Line 
-              type="monotone" 
-              dataKey="middle" 
+            <Line
+              type="monotone"
+              dataKey="light"
+              name="ライト"
+              stroke="#667eea"
+              strokeWidth={3}
+              activeDot={{ r: 8 }}
+              animationDuration={1500}
+            />
+            <Line
+              type="monotone"
+              dataKey="middle"
               name="ミドル"
-              stroke="#764ba2" 
-              strokeWidth={3} 
-              activeDot={{ r: 8 }} 
+              stroke="#764ba2"
+              strokeWidth={3}
+              activeDot={{ r: 8 }}
               animationDuration={1500}
               animationBegin={200}
             />
-            <Line 
-              type="monotone" 
-              dataKey="heavy" 
+            <Line
+              type="monotone"
+              dataKey="heavy"
               name="ヘビー"
-              stroke="#8e9de8" 
-              strokeWidth={3} 
-              activeDot={{ r: 8 }} 
+              stroke="#8e9de8"
+              strokeWidth={3}
+              activeDot={{ r: 8 }}
               animationDuration={1500}
-              animationBegin={400} 
+              animationBegin={400}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -150,9 +260,17 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
 
       {/* --- フッター情報も変更なし --- */}
       {selectedAppId && selectedPeriod && (
-        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderTopColor: 'divider' }}>
+        <Box
+          sx={{
+            mt: 2,
+            pt: 2,
+            borderTop: "1px solid",
+            borderTopColor: "divider",
+          }}
+        >
           <Typography variant="caption" color="text.secondary">
-            最終更新: {new Date().toLocaleString('ja-JP')} | セグメント: 課金額によるユーザー分類
+            最終更新: {new Date().toLocaleString("ja-JP")} | セグメント:
+            課金額によるユーザー分類
           </Typography>
         </Box>
       )}
