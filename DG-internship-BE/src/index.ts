@@ -61,6 +61,44 @@ app.get("/api/:appId/ltv/chart-data", async (c) => {
   }
 });
 
+// 月次LTV API エンドポイント - 新規追加
+app.get("/api/:appId/ltv/monthly-chart-data", async (c) => {
+  const { runMonthlyLtvProcess } = await import("../services/runMonthlyLtvProcess.js");
+  
+  const appId = c.req.param("appId");
+  const { startDate: startDateStr, endDate: endDateStr } = c.req.query();
+
+  const startDate = startDateStr ? new Date(startDateStr) : undefined;
+  const endDate = endDateStr ? new Date(endDateStr) : undefined;
+
+  console.log(`Received monthly LTV request for appId: ${appId}`);
+
+  try {
+    const monthlyChartData = await runMonthlyLtvProcess(appId, startDate, endDate);
+
+    return c.json({
+      success: true,
+      appId: appId,
+      chartData: monthlyChartData,
+    });
+  } catch (error) {
+    console.error(
+      `[Error] Failed to process monthly LTV data for appId ${appId}:`,
+      error
+    );
+
+    return c.json(
+      {
+        success: false,
+        appId: appId,
+        message: "An internal server error occurred while processing monthly LTV data.",
+        chartData: [],
+      },
+      500
+    );
+  }
+});
+
 // デバッグ用ルーティングを設定
 app.route("/api/debug", debug);
 
