@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import useSWR from "swr";
+import { useMemo } from 'react';
 
 const fetcher = async (url) => {
   const response = await fetch(url);
@@ -44,7 +45,7 @@ const transformChartData = (apiData) => {
 };
 
 // 2. Y軸の数値を「¥12K」のような形式にフォーマットする関数
-const formatYAxis = (tickItem) => `¥${tickItem / 1000}K`;
+const formatYAxis = (tickItem) => `${tickItem}人`;
 
 // 3. グラフにマウスオーバーした際のカスタムツールチップ
 const CustomTooltip = ({ active, payload, label }) => {
@@ -64,7 +65,7 @@ const CustomTooltip = ({ active, payload, label }) => {
         >{`${label}時点`}</Typography>
         {payload.map((p) => (
           <Typography key={p.name} variant="body2" sx={{ color: p.color }}>
-            {`${p.name}: ${p.value.toLocaleString()}円`}
+            {`${p.name}: ${p.value.toLocaleString()}人`}
           </Typography>
         ))}
       </Paper>
@@ -90,25 +91,57 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
   // チャートデータを変換
   const chartData = data?.success ? transformChartData(data.chartData) : [];
 
+const filteredData = useMemo(() => {
+  if (!selectedPeriod) {
+    return chartData;
+  }
+
+  const now = new Date("2024-12-31");
+  let startDate = new Date(now);
+
+  switch (selectedPeriod) {
+    case '1week':
+      startDate.setDate(now.getDate() - 7);
+      break;
+    case '1month':
+      startDate.setMonth(now.getMonth() - 1);
+      break;
+    case '1year':
+      // まず月初にしてから1年前に
+      startDate.setDate(1);
+      startDate.setMonth(now.getMonth());
+      startDate.setFullYear(now.getFullYear() - 1);
+      break;
+    default:
+      return chartData;
+  }
+
+  return chartData.filter(item => {
+    // item.dateが"YYYY-MM-DD"形式ならタイムゾーンずれ防止
+    const itemDate = new Date(item.date + "T00:00:00");
+    return itemDate >= startDate;
+  });
+}, [chartData, selectedPeriod]);
+
   // 統計情報を計算
   const stats =
     chartData.length > 0
       ? {
-          totalDays: chartData.length,
+          totalDays: filteredData.length,
           avgHeavy: Math.round(
-            chartData.reduce((sum, item) => sum + item.heavy, 0) /
-              chartData.length
+            filteredData.reduce((sum, item) => sum + item.heavy, 0) /
+              filteredData.length
           ),
           avgMiddle: Math.round(
-            chartData.reduce((sum, item) => sum + item.middle, 0) /
-              chartData.length
+            filteredData.reduce((sum, item) => sum + item.middle, 0) /
+              filteredData.length
           ),
           avgLight: Math.round(
-            chartData.reduce((sum, item) => sum + item.light, 0) /
-              chartData.length
+            filteredData.reduce((sum, item) => sum + item.light, 0) /
+              filteredData.length
           ),
-          maxTotal: Math.max(...chartData.map((item) => item.total)),
-          minTotal: Math.min(...chartData.map((item) => item.total)),
+          maxTotal: Math.max(...filteredData.map((item) => item.total)),
+          minTotal: Math.min(...filteredData.map((item) => item.total)),
         }
       : null;
 
@@ -176,9 +209,6 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
           <Typography variant="h6" sx={{ fontWeight: 600, color: color }}>
             セグメント別平均LTV推移
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            ライト課金者: ¥1,200 → ミドル課金者: ¥4,800 → ヘビー課金者: ¥12,000
-          </Typography>
         </Box>
         {selectedAppId && selectedPeriod && (
           <Box sx={{ display: "flex", gap: 1 }}>
@@ -208,7 +238,7 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
       <Box sx={{ flex: 1, width: "100%", height: "100%" }}>
         <ResponsiveContainer>
           <LineChart
-            data={chartData}
+            data={filteredData}
             margin={{
               top: 5,
               right: 30,
@@ -232,6 +262,7 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
               stroke="#667eea"
               strokeWidth={3}
               activeDot={{ r: 8 }}
+              dot={false}
               animationDuration={1500}
             />
             <Line
@@ -241,6 +272,7 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
               stroke="#764ba2"
               strokeWidth={3}
               activeDot={{ r: 8 }}
+              dot={false}
               animationDuration={1500}
               animationBegin={200}
             />
@@ -251,6 +283,7 @@ export const LTVGraph = ({ selectedAppId, selectedPeriod }) => {
               stroke="#8e9de8"
               strokeWidth={3}
               activeDot={{ r: 8 }}
+              dot={false}
               animationDuration={1500}
               animationBegin={400}
             />
