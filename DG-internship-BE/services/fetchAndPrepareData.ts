@@ -21,8 +21,6 @@ export async function fetchAndPrepareData(
   url.searchParams.append("status", "completed");
   url.searchParams.append("sort", "desc");
 
-  console.log("Fetching data from mock API..." + url.toString());
-
   try {
     const response: Response = await fetch(url.toString());
 
@@ -54,8 +52,6 @@ export async function fetchAndPrepareData(
         userHistoryMap.set(userId, [transaction]);
       }
     }
-
-    console.log("Data preparation complete.");
     return userHistoryMap;
   } catch (error) {
     console.error("An error occurred in fetchAndPrepareData:", error);

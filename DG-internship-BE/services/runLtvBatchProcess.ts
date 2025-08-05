@@ -22,8 +22,6 @@ export async function runLtvBatchProcess(
   startDate: Date = new Date("2024-01-01T00:00:00Z"),
   endDate: Date = new Date("2024-12-31T23:59:59Z")
 ): Promise<DailyLtvSnapshot[]> {
-  console.log("🚀 Starting LTV batch process...");
-
   // 1. 最初に一度だけ、全ユーザーの取引データを取得・準備する
   const userHistoryMap = await fetchAndPrepareData(appId);
   if (userHistoryMap.size === 0) {

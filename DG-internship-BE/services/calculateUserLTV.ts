@@ -83,10 +83,5 @@ export function calculateUserLTV(
   // LTV = 平均購入単価 × 月間購入頻度 × 顧客寿命（月）
   const ltv = apv * monthlyFrequency * customerLifetimeMonths;
 
-  // デバッグ用ログ（必要に応じて）
-  if (transactionsUpToDate.length === 1) {
-    console.log(`Debug LTV: APV=${apv}, Freq=${monthlyFrequency}, LTV=${ltv}`);
-  }
-
   return ltv;
 }
