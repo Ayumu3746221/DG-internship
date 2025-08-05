@@ -25,12 +25,22 @@ chatRouter.post("/start", async (c) => {
     const analysis = await geminiService.getInitialAnalysis();
 
     return c.json({ success: true, data: { analysis } });
-  } catch (error) {
-    console.error("Start chat error:", error);
-    return c.json(
-      { success: false, error: "Failed to start chat session" },
-      500
-    );
+  } catch (error: any) {
+    console.error('Start chat error:', error);
+    
+    // エラーメッセージをクライアントに返す
+    let errorMessage = 'チャットの開始に失敗しました。';
+    if (error.status === 503) {
+      errorMessage = 'AIサービスが一時的に利用できません。しばらくしてからもう一度お試しください。';
+    } else if (error.message) {
+      errorMessage += ` ${error.message}`;
+    }
+    
+    return c.json({ 
+      success: false, 
+      error: errorMessage,
+      details: error.status || 500
+    }, error.status || 500);
   }
 });
 
@@ -44,13 +54,7 @@ chatRouter.post("/message", async (c) => {
   try {
     // チャットセッションが初期化されているかチェック
     if (!geminiService) {
-      return c.json(
-        {
-          success: false,
-          error: "Chat session not initialized. Please start a chat first.",
-        },
-        400
-      );
+      return c.json({ success: false, error: 'チャットセッションが初期化されていません。先にチャットを開始してください。' }, 400);
     }
 
     // リクエストボディからメッセージを取得
@@ -58,16 +62,29 @@ chatRouter.post("/message", async (c) => {
 
     // メッセージの必須チェック
     if (!message) {
-      return c.json({ success: false, error: "Message is required" }, 400);
+      return c.json({ success: false, error: 'メッセージが必要です。' }, 400);
     }
 
     // AIにメッセージを送信してレスポンスを取得
     const response = await geminiService.sendMessage(message);
 
     return c.json({ success: true, data: { response } });
-  } catch (error) {
-    console.error("Chat error:", error);
-    return c.json({ success: false, error: "Failed to process message" }, 500);
+  } catch (error: any) {
+    console.error('Chat error:', error);
+    
+    // エラーメッセージをクライアントに返す
+    let errorMessage = 'メッセージの処理に失敗しました。';
+    if (error.status === 503) {
+      errorMessage = 'AIサービスが一時的に利用できません。しばらくしてからもう一度お試しください。';
+    } else if (error.message) {
+      errorMessage += ` ${error.message}`;
+    }
+    
+    return c.json({ 
+      success: false, 
+      error: errorMessage,
+      details: error.status || 500
+    }, error.status || 500);
   }
 });
 
