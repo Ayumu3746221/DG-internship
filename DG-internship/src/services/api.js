@@ -19,9 +19,11 @@ export const chatAPI = {
   /**
    * チャットセッションを開始
    * 経営データをAIに送信し、初期分析を取得
+   * @param {string} appId アプリケーションID 
+   * @param {string} period 期間
    */
-  startChat: async () => {
-    const response = await api.post('/chat/start');
+  startChat: async (appId, period) => {
+    const response = await api.post('/chat/start', { appId, period });
     return response.data;
   },
 
