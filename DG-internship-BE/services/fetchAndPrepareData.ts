@@ -1,8 +1,8 @@
-import type { MockAPIResponse } from "../../types/MockAPI.js";
-import type { Transaction } from "../../types/Transaction.js";
+import type { MockAPIResponse } from "../types/MockAPI.js";
+import type { Transaction } from "../types/Transaction.js";
 
 function convertUnixToDate(unixTimestamp: number): Date {
-  return new Date(unixTimestamp * 1000);
+  return new Date(unixTimestamp);
 }
 
 // 3. メインの関数
