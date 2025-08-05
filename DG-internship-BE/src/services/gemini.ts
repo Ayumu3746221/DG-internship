@@ -5,7 +5,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Google Generative AIのインスタンス作成
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY environment variable is not set.');
+}
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
  * 模擬経営データ
