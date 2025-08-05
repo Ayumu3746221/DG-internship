@@ -22,38 +22,54 @@ const fetcher = async (url) => {
   return response.json();
 };
 
-// APIデータから月別売上を計算する関数
-const calculateMonthlySales = (orders) => {
+
+const aggregateSales = (orders, period) => {
   if (!orders || !Array.isArray(orders)) return [];
 
-  // 月別売上を集計するオブジェクト
-  const monthlySales = {};
+  // 期間フィルタ用の日付を計算
+  const endDate = new Date("2024-12-31T23:59:59");
+  let startDate = new Date(endDate);
 
-  orders.forEach((order) => {
-    // Unix timestampを日付に変換
-    const date = convertUnixToDate(order.orderAt);
-    const monthKey = `${date.getFullYear()}-${String(
-      date.getMonth() + 1
-    ).padStart(2, "0")}`;
-    const monthLabel = `${date.getMonth() + 1}月`;
-
-    // 月別売上を累計
-    if (!monthlySales[monthKey]) {
-      monthlySales[monthKey] = {
-        month: monthLabel,
-        sales: 0,
-        orderCount: 0,
-      };
+    if (period === "1week") {
+    startDate.setDate(endDate.getDate() - 6); // 12/25～12/31の7日間
+    } else if (period === "1month") {
+    startDate.setMonth(endDate.getMonth() - 1); // 11/31→12/31の1か月間
+    // setDateは不要
+    } else if (period === "1year") {
+    startDate.setMonth(0);
+    startDate.setDate(1);
     }
 
-    monthlySales[monthKey].sales += order.item.price;
-    monthlySales[monthKey].orderCount += 1;
+  const result = {};
+
+  orders.forEach((order) => {
+    const dateObj = new Date(order.orderAt);
+    // 期間外はスキップ
+    if (period !== "1year" && (dateObj < startDate || dateObj > endDate)) return;
+    if (period === "1year" && (dateObj < startDate || dateObj > endDate)) return;
+
+    let key, label;
+    if (period === "1year") {
+      key = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
+      label = `${dateObj.getMonth() + 1}月`;
+    } else {
+      key = dateObj.toISOString().split("T")[0];
+      label = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+    }
+
+    if (!result[key]) {
+      result[key] = { label, sales: 0, orderCount: 0 };
+    }
+    result[key].sales += order.item.price;
+    result[key].orderCount += 1;
   });
 
-  // オブジェクトを配列に変換し、月順でソート
-  return Object.keys(monthlySales)
+  return Object.keys(result)
     .sort()
-    .map((key) => monthlySales[key]);
+    .map((key) => ({
+      ...result[key],
+      dateKey: key,
+    }));
 };
 
 const formatYAxis = (tickItem) => {
@@ -88,7 +104,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export const SalesChart = ({ selectedAppId }) => {
+export const SalesChart = ({ selectedAppId, selectedPeriod }) => {
   // useSWRでAPIデータを取得
   const { data, error, isLoading } = useSWR(
     selectedAppId
@@ -113,7 +129,7 @@ export const SalesChart = ({ selectedAppId }) => {
       : [];
 
   // 月別売上データを計算
-  const chartData = calculateMonthlySales(orders);
+  const chartData = aggregateSales(orders, selectedPeriod);
 
   // ローディング状態
   if (isLoading) {
@@ -188,7 +204,7 @@ export const SalesChart = ({ selectedAppId }) => {
         margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
       >
         <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
-        <XAxis dataKey="month" />
+        <XAxis dataKey="label" />
         <YAxis tickFormatter={formatYAxis} />
         <Tooltip content={<CustomTooltip />} />
         <Legend />
