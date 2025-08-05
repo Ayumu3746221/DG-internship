@@ -297,7 +297,7 @@ export const DemographicsGraph = ({ selectedAppId, selectedPeriod }) => {
             justifyContent: "center",
           }}
         >
-          <svg width="100%" height="300" viewBox="0 0 500 300">
+          <svg width="100%" height="450" viewBox="0 0 500 300">
             {/* 性別比率の円グラフ */}
             <g transform="translate(120, 150)">
               {/* 男性部分 */}
