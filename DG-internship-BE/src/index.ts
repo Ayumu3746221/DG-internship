@@ -1,6 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import cors from "hono/cors";
+import { cors } from "hono/cors";
 import dotenv from "dotenv";
 import chatRouter from "./routes/chat.js";
 import debug from "./debugRouter.js";
