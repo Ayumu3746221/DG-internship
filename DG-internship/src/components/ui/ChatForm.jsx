@@ -13,7 +13,7 @@ import {
 import { Send, SmartToy, Person, Psychology, Refresh } from '@mui/icons-material';
 import { chatAPI } from '../../services/api';
 
-export const ChatForm = () => {
+export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,11 +29,24 @@ export const ChatForm = () => {
     scrollToBottom();
   }, [messages]);
 
+  // appIdまたはperiodが変更された場合、チャットをリセット
+  useEffect(() => {
+    if (chatInitialized) {
+      // パラメータが変更された場合のみリセット
+      setMessages([]);
+      setChatStarted(false);
+      setChatInitialized(false);
+      setInputValue('');
+    }
+  }, [selectedAppId, selectedPeriod]);
+
   const startChat = async () => {
     try {
       setIsLoading(true);
       setChatInitialized(true);
-      const response = await chatAPI.startChat();
+      
+      // appIdとperiodを含めてチャットを開始
+      const response = await chatAPI.startChat(selectedAppId, selectedPeriod);
       
       if (response.success) {
         setChatStarted(true);
@@ -226,7 +239,12 @@ export const ChatForm = () => {
               AI分析を開始
             </Typography>
             <Typography variant="body2" color="text.secondary" align="center" sx={{ maxWidth: 300 }}>
-              経営データをAIに送信し、分析を開始します。
+              {selectedAppId && selectedPeriod 
+                ? `アプリ「${selectedAppId}」の「${selectedPeriod}」期間のLTVデータを分析します。`
+                : selectedAppId
+                ? `アプリ「${selectedAppId}」の全期間のLTVデータを分析します。`
+                : 'デモ用のサンプルデータを使用してAI分析を開始します。'
+              }
               AIが初期分析を提供した後、質問できるようになります。
             </Typography>
             <Button

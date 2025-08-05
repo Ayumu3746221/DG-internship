@@ -151,7 +151,10 @@ export const Dashboard = () => {
             
             {/* 右側エリア: チャットフォーム (1/3幅 = 4/12) */}
             <Grid size={{ xs: 12, lg: 4 }} sx={{ height: '100%' }}>
-              <ChatForm />
+              <ChatForm 
+                selectedAppId={selectedAppId}
+                selectedPeriod={selectedPeriod}
+              />
             </Grid>
           </Grid>
         </Container>
