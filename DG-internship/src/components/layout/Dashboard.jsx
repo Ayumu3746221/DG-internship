@@ -16,6 +16,7 @@ import { AppSelector } from '../ui/AppSelector';
 import { PeriodSelector } from '../ui/PeriodSelector';
 import { GraphTabs } from '../ui/GraphTabs';
 import { ChatForm } from '../ui/ChatForm';
+import { GraphContainer } from '../ui/GraphContainer';
 
 const theme = createTheme({
   palette: {
@@ -138,6 +139,13 @@ export const Dashboard = () => {
                   </Grid>
                 </Grid>
               </Paper>
+              
+              {/* グラフエリア */}
+              <GraphContainer 
+                activeTab={activeTab}
+                selectedAppId={selectedAppId}
+                selectedPeriod={selectedPeriod}
+              />
             </Grid>
             
             <Grid item xs={12} lg={4}>
