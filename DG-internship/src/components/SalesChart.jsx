@@ -44,7 +44,7 @@ export const SalesChart = () => {
                     type="monotone"
                     dataKey="sales"
                     name="合計購入金額"
-                    stroke="#8884d8"
+                    stroke='#28a745'
                     strokeWidth={2}
                     activeDot={{ r: 8 }}
                 />
