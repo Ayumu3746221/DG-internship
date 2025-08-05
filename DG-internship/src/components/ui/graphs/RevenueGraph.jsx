@@ -89,7 +89,7 @@ export const RevenueGraph = ({ selectedAppId, selectedPeriod }) => {
             justifyContent: "center",
           }}
         >
-          <SalesChart selectedAppId={selectedAppId} />
+          <SalesChart selectedAppId={selectedAppId} selectedPeriod={selectedPeriod} />
         </Box>
       </Box>
       {selectedAppId && selectedPeriod && (
