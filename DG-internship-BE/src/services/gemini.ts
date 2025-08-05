@@ -46,10 +46,12 @@ export const businessData = {
 export class GeminiService {
   private model;                      // Geminiモデルインスタンス
   private chatSession: any;          // チャットセッション
+  private ltvData: any;              // LTVデータ（動的に設定）
 
-  constructor() {
+  constructor(ltvData: any = null) {
     // Gemini 1.5 Flashモデルを使用（より安定）
     this.model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.ltvData = ltvData || businessData; // LTVデータまたはデフォルトデータを使用
   }
 
   /**
@@ -60,12 +62,12 @@ export class GeminiService {
     // AIに送信する経営データのコンテキスト
     const reportContext = `
     以下は、あるモバイルゲームアプリに関する運営データです。
-    提供される情報には、ユーザーのLTV（顧客生涯価値）、一定期間の購入履歴、活発に課金した時間帯と曜日、年齢層、性別、地域などが含まれています。
+    提供される情報には、ユーザーのLTV（顧客生涯価値）の月次推移データが含まれています。
 
     ※専門用語は避け、初心者にも分かる表現で、小見出しを付けて丁寧に説明してください。
 
     モバイルゲームアプリに関する運営データ：
-    ${JSON.stringify(businessData, null, 2)}
+    ${JSON.stringify(this.ltvData, null, 2)}
     
     この情報を基に、わかりやすく、実践的なアドバイスを提供してください。
     `;
