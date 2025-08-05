@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { Send, SmartToy, Person, Psychology, Refresh } from '@mui/icons-material';
 import { chatAPI } from '../../services/api';
+import AIMessageRenderer from './AIMessageRenderer';
 
 export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
   const [messages, setMessages] = useState([]);
@@ -300,24 +301,33 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
               </Avatar>
             )}
             
-            <Box sx={{ maxWidth: '75%' }}>
-              <Paper
-                elevation={1}
-                sx={{
-                  p: 2,
-                  background: message.sender === 'user' 
-                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                    : 'white',
-                  color: message.sender === 'user' ? 'white' : 'text.primary',
-                  borderRadius: 3,
-                  border: message.sender === 'ai' ? '1px solid' : 'none',
-                  borderColor: 'divider',
-                }}
-              >
-                <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                  {message.text}
-                </Typography>
-              </Paper>
+            <Box sx={{ 
+              maxWidth: message.sender === 'ai' ? '95%' : '75%',
+              animation: message.sender === 'ai' ? 'fadeIn 0.5s ease-in' : 'none',
+              '@keyframes fadeIn': {
+                '0%': { opacity: 0, transform: 'translateY(10px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' }
+              }
+            }}>
+              {message.sender === 'ai' ? (
+                <Box sx={{ width: '100%' }}>
+                  <AIMessageRenderer content={message.text} />
+                </Box>
+              ) : (
+                <Paper
+                  elevation={1}
+                  sx={{
+                    p: 2,
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    borderRadius: 3,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+                    {message.text}
+                  </Typography>
+                </Paper>
+              )}
               <Typography 
                 variant="caption" 
                 color="text.secondary" 
