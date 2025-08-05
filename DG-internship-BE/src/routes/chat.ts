@@ -15,8 +15,54 @@ let geminiService: GeminiService | null = null;
  */
 chatRouter.post("/start", async (c) => {
   try {
-    // 新しいGeminiサービスインスタンスを作成
-    geminiService = new GeminiService();
+    // リクエストボディからappIdとperiodを取得
+    const { appId, period } = await c.req.json();
+    
+    let ltvData = null;
+    
+    // appIdが提供されている場合、実際のLTVデータを取得
+    if (appId) {
+      try {
+        const { runMonthlyLtvProcess } = await import("../../services/runMonthlyLtvProcess.js");
+        
+        // 期間の解析（例: "2024-01" または "2024" または undefined）
+        let startDate, endDate;
+        if (period) {
+          if (period.length === 4) { // 年のみ（例: "2024"）
+            startDate = new Date(`${period}-01-01`);
+            endDate = new Date(`${period}-12-31`);
+          } else if (period.length === 7) { // 年月（例: "2024-01"）
+            const year = period.substring(0, 4);
+            const month = period.substring(5, 7);
+            startDate = new Date(`${period}-01`);
+            endDate = new Date(parseInt(year), parseInt(month), 0); // 月末
+          }
+        }
+
+        // 月次LTVデータを取得
+        const monthlyLtvData = await runMonthlyLtvProcess(appId, startDate, endDate);
+        
+        ltvData = {
+          appId: appId,
+          period: period || "全期間",
+          ltvData: monthlyLtvData,
+          summary: {
+            totalMonths: monthlyLtvData.length,
+            avgHigh: Math.round(monthlyLtvData.reduce((sum: number, item: any) => sum + item.high, 0) / monthlyLtvData.length || 0),
+            avgMiddle: Math.round(monthlyLtvData.reduce((sum: number, item: any) => sum + item.middle, 0) / monthlyLtvData.length || 0),
+            avgLow: Math.round(monthlyLtvData.reduce((sum: number, item: any) => sum + item.low, 0) / monthlyLtvData.length || 0),
+          }
+        };
+        
+        console.log(`Retrieved LTV data for appId: ${appId}, period: ${period}, months: ${monthlyLtvData.length}`);
+      } catch (error) {
+        console.error('Failed to fetch LTV data:', error);
+        // LTVデータの取得に失敗した場合もデフォルトデータで続行
+      }
+    }
+
+    // 新しいGeminiサービスインスタンスを作成（LTVデータを渡す）
+    geminiService = new GeminiService(ltvData);
 
     // AIチャットセッションを初期化（経営データを送信）
     await geminiService.initializeChat();
