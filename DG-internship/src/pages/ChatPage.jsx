@@ -93,7 +93,7 @@ const ChatPage = () => {
       if (response.success) {
         // AIからのレスポンスをメッセージリストに追加
         const aiMessage = {
-          id: Date.now() + 1,
+          id: crypto.randomUUID(),
           type: 'ai',
           content: response.data.response,
           timestamp: new Date().toLocaleTimeString('ja-JP')
@@ -104,7 +104,7 @@ const ChatPage = () => {
       console.error('Failed to send message:', error);
       // エラー時のメッセージを表示
       const errorMessage = {
-        id: Date.now() + 1,
+        id: crypto.randomUUID(),
         type: 'ai',
         content: 'メッセージの送信に失敗しました。もう一度お試しください。',
         timestamp: new Date().toLocaleTimeString('ja-JP')
