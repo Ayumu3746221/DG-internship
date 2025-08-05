@@ -1,5 +1,5 @@
-import { Hono } from 'hono';
-import { GeminiService } from '../services/gemini.js';
+import { Hono } from "hono";
+import { GeminiService } from "../services/gemini.js";
 
 // チャット関連のルーター
 const chatRouter = new Hono();
@@ -13,17 +13,17 @@ let geminiService: GeminiService | null = null;
  * - 経営データをAIに送信して初期化
  * - 初期分析を取得して返す
  */
-chatRouter.post('/start', async (c) => {
+chatRouter.post("/start", async (c) => {
   try {
     // 新しいGeminiサービスインスタンスを作成
     geminiService = new GeminiService();
-    
+
     // AIチャットセッションを初期化（経営データを送信）
     await geminiService.initializeChat();
-    
+
     // 初期分析を取得
     const analysis = await geminiService.getInitialAnalysis();
-    
+
     return c.json({ success: true, data: { analysis } });
   } catch (error: any) {
     console.error('Start chat error:', error);
@@ -50,7 +50,7 @@ chatRouter.post('/start', async (c) => {
  * - ユーザーメッセージをAIに送信
  * - AIレスポンスを返す
  */
-chatRouter.post('/message', async (c) => {
+chatRouter.post("/message", async (c) => {
   try {
     // チャットセッションが初期化されているかチェック
     if (!geminiService) {
@@ -59,7 +59,7 @@ chatRouter.post('/message', async (c) => {
 
     // リクエストボディからメッセージを取得
     const { message } = await c.req.json();
-    
+
     // メッセージの必須チェック
     if (!message) {
       return c.json({ success: false, error: 'メッセージが必要です。' }, 400);
@@ -67,7 +67,7 @@ chatRouter.post('/message', async (c) => {
 
     // AIにメッセージを送信してレスポンスを取得
     const response = await geminiService.sendMessage(message);
-    
+
     return c.json({ success: true, data: { response } });
   } catch (error: any) {
     console.error('Chat error:', error);
@@ -93,14 +93,20 @@ chatRouter.post('/message', async (c) => {
  * - 現在のGeminiServiceインスタンスを破棄
  * - 新しいチャット開始に備える
  */
-chatRouter.post('/reset', async (c) => {
+chatRouter.post("/reset", async (c) => {
   try {
     // Geminiサービスインスタンスをリセット
     geminiService = null;
-    
-    return c.json({ success: true, message: 'Chat session reset successfully' });
+
+    return c.json({
+      success: true,
+      message: "Chat session reset successfully",
+    });
   } catch (error) {
-    return c.json({ success: false, error: 'Failed to reset chat session' }, 500);
+    return c.json(
+      { success: false, error: "Failed to reset chat session" },
+      500
+    );
   }
 });
 
