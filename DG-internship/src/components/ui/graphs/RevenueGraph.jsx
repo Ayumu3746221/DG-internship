@@ -15,8 +15,8 @@ export const RevenueGraph = ({ selectedAppId, selectedPeriod }) => {
         <Paper 
           elevation={3}
           sx={{ 
-            p: 4, 
-            height: '500px',
+            p: 2, 
+            height: '100%',
             display: 'flex',
             flexDirection: 'column',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%)',

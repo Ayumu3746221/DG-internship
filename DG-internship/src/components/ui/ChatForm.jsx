@@ -71,7 +71,7 @@ export const ChatForm = () => {
     <Paper 
       elevation={3}
       sx={{ 
-        height: '100%', 
+        height: '100%', // ビューポートに合わせて調整
         display: 'flex', 
         flexDirection: 'column',
         background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%)',
@@ -80,12 +80,13 @@ export const ChatForm = () => {
         overflow: 'hidden'
       }}
     >
-      {/* Header */}
+      {/* Header - 圧縮された固定高さ */}
       <Box
         sx={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          p: 3,
+          p: 2, // 3 → 2 に圧縮
           color: 'white',
+          flexShrink: 0, // ヘッダーのサイズを固定
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -93,32 +94,49 @@ export const ChatForm = () => {
             sx={{
               background: 'rgba(255,255,255,0.2)',
               backdropFilter: 'blur(10px)',
-              width: 48,
-              height: 48,
+              width: 40, // 48 → 40 に圧縮
+              height: 40, // 48 → 40 に圧縮
             }}
           >
             <Psychology />
           </Avatar>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}> {/* h6 → subtitle1 に圧縮 */}
               AIマーケティングアシスタント
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            <Typography variant="caption" sx={{ opacity: 0.9 }}> {/* body2 → caption に圧縮 */}
               データドリブンなアドバイスを提供
             </Typography>
           </Box>
         </Box>
       </Box>
 
-      {/* Messages */}
+      {/* Messages - スクロール可能エリア */}
       <Box
         sx={{
           flex: 1,
           overflowY: 'auto',
+          overflowX: 'hidden',
           p: 2,
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
+          minHeight: 0, // フレックスアイテムが適切に縮小されるように
+          // カスタムスクロールバー
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'rgba(0,0,0,0.1)',
+            borderRadius: '10px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '10px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: 'linear-gradient(135deg, #5a72e3 0%, #6d4498 100%)',
+          },
         }}
       >
         {messages.map((message) => (
@@ -213,7 +231,7 @@ export const ChatForm = () => {
 
       <Divider />
       
-      {/* Input */}
+      {/* Input - 固定高さ */}
       <Box
         component="form"
         onSubmit={handleSubmit}
@@ -224,6 +242,7 @@ export const ChatForm = () => {
           alignItems: 'flex-end',
           background: 'rgba(255,255,255,0.8)',
           backdropFilter: 'blur(5px)',
+          flexShrink: 0, // 入力エリアのサイズを固定
         }}
       >
         <TextField
