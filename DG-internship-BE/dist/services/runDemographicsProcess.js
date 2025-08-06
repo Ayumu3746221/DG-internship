@@ -119,17 +119,21 @@ const analyzeDemographics = (orders) => {
 };
 export async function runDemographicsProcess(appId) {
     try {
+        console.log(`👥 [DEMOGRAPHICS SERVICE] Processing demographics data for appId: ${appId}`);
         // APIから注文データを取得
         const apiUrl = `https://tjufwmnunr.ap-northeast-1.awsapprunner.com/api/v1/orders?appId=${appId}&status=completed&sort=desc`;
+        console.log(`👥 [DEMOGRAPHICS SERVICE] Fetching from: ${apiUrl}`);
         const response = await fetch(apiUrl);
         if (!response.ok) {
             throw new Error(`Failed to fetch demographics data: ${response.statusText}`);
         }
         const data = await response.json();
+        console.log(`👥 [DEMOGRAPHICS SERVICE] API response success: ${data?.meta?.isSuccess}, orders: ${data?.orders?.length || 0}`);
         // データを分析
         const analysis = data?.meta?.isSuccess
             ? analyzeDemographics(data.orders)
             : analyzeDemographics([]);
+        console.log(`👥 [DEMOGRAPHICS SERVICE] Analysis completed: ${analysis.totalUsers} users, ${analysis.summary.mainGender} majority, top region: ${analysis.summary.topRegion}`);
         return analysis;
     }
     catch (error) {

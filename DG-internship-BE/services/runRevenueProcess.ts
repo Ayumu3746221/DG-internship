@@ -75,8 +75,11 @@ const aggregateSales = (orders: any[], period: '1week' | '1month' | '1year'): Re
 
 export async function runRevenueProcess(appId: string): Promise<RevenueAnalysis> {
   try {
+    console.log(`📈 [REVENUE SERVICE] Processing revenue data for appId: ${appId}`);
+    
     // APIから注文データを取得
     const apiUrl = `http://localhost:3000/api/debug/fetch-data/${appId}`;
+    console.log(`📈 [REVENUE SERVICE] Fetching from: ${apiUrl}`);
     const response = await fetch(apiUrl);
     
     if (!response.ok) {
@@ -84,6 +87,7 @@ export async function runRevenueProcess(appId: string): Promise<RevenueAnalysis>
     }
     
     const data = await response.json();
+    console.log(`📈 [REVENUE SERVICE] API response success: ${data?.success}`);
     
     // APIレスポンスから注文データを抽出
     const orders = data?.success && data?.data?.userHistories
@@ -94,11 +98,15 @@ export async function runRevenueProcess(appId: string): Promise<RevenueAnalysis>
           }))
         )
       : [];
+    
+    console.log(`📈 [REVENUE SERVICE] Extracted ${orders.length} orders from ${data?.data?.userHistories?.length || 0} users`);
 
     // 各期間の売上データを計算
     const weekData = aggregateSales(orders, '1week');
     const monthData = aggregateSales(orders, '1month');
     const yearData = aggregateSales(orders, '1year');
+
+    console.log(`📈 [REVENUE SERVICE] Aggregated data: Week(${weekData.length}), Month(${monthData.length}), Year(${yearData.length})`);
 
     // サマリー計算
     const weekTotal = weekData.reduce((sum, item) => sum + item.sales, 0);
@@ -113,6 +121,8 @@ export async function runRevenueProcess(appId: string): Promise<RevenueAnalysis>
       avgMonthly: monthTotal / (monthData.length || 1),
       avgYearly: yearTotal / (yearData.length || 1),
     };
+
+    console.log(`📈 [REVENUE SERVICE] Summary calculated: Week=${weekTotal}, Month=${monthTotal}, Year=${yearTotal}`);
 
     return {
       weekData,
