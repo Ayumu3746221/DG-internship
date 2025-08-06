@@ -138,7 +138,7 @@ export const Dashboard = () => {
                       onPeriodChange={setSelectedPeriod}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, md: 4 }}>
+                  <Grid size={{ xs: 12, md: 4 }} sx={{ mt: {lg:-5}}}>
                     <GraphTabs
                       activeTab={activeTab}
                       onTabChange={setActiveTab}
