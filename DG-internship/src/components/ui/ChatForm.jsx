@@ -30,16 +30,17 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
     scrollToBottom();
   }, [messages]);
 
-  // appIdまたはperiodが変更された場合、チャットをリセット
+  // appIdが変更された場合のみ、チャットをリセット
+  // 注意：periodの変更では実際のデータが変わらないため、リセットしない
   useEffect(() => {
     if (chatInitialized) {
-      // パラメータが変更された場合のみリセット
+      // appIdが変更された場合のみリセット
       setMessages([]);
       setChatStarted(false);
       setChatInitialized(false);
       setInputValue('');
     }
-  }, [selectedAppId, selectedPeriod]);
+  }, [selectedAppId]); // selectedPeriodを依存配列から削除
 
   const startChat = async () => {
     try {
@@ -240,10 +241,8 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
               AI分析を開始
             </Typography>
             <Typography variant="body2" color="text.secondary" align="center" sx={{ maxWidth: 300 }}>
-              {selectedAppId && selectedPeriod 
-                ? `アプリ「${selectedAppId}」の「${selectedPeriod}」期間のLTVデータを分析します。`
-                : selectedAppId
-                ? `アプリ「${selectedAppId}」の全期間のLTVデータを分析します。`
+              {selectedAppId 
+                ? `アプリ「${selectedAppId}」の包括的データ（LTV・売上推移・顧客属性）を分析します。`
                 : 'デモ用のサンプルデータを使用してAI分析を開始します。'
               }
               AIが初期分析を提供した後、質問できるようになります。
