@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 import {
   Paper,
   Box,
@@ -8,22 +8,28 @@ import {
   Avatar,
   CircularProgress,
   Divider,
-  Button
-} from '@mui/material';
-import { Send, SmartToy, Person, Psychology, Refresh } from '@mui/icons-material';
-import { chatAPI } from '../../services/api';
-import AIMessageRenderer from './AIMessageRenderer';
+  Button,
+} from "@mui/material";
+import {
+  Send,
+  SmartToy,
+  Person,
+  Psychology,
+  Refresh,
+} from "@mui/icons-material";
+import { chatAPI } from "../../services/api";
+import AIMessageRenderer from "./AIMessageRenderer";
 
 export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
   const [messages, setMessages] = useState([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chatStarted, setChatStarted] = useState(false);
   const [chatInitialized, setChatInitialized] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -38,7 +44,7 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
       setMessages([]);
       setChatStarted(false);
       setChatInitialized(false);
-      setInputValue('');
+      setInputValue("");
     }
   }, [selectedAppId]); // selectedPeriodを依存配列から削除
 
@@ -46,38 +52,47 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
     try {
       setIsLoading(true);
       setChatInitialized(true);
-      
+
       // appIdとperiodを含めてチャットを開始
       const response = await chatAPI.startChat(selectedAppId, selectedPeriod);
-      
+
       if (response.success) {
         setChatStarted(true);
-        setMessages([{
-          id: crypto.randomUUID(),
-          text: response.data.analysis,
-          sender: 'ai',
-          timestamp: new Date()
-        }]);
+        setMessages([
+          {
+            id: crypto.randomUUID(),
+            text: response.data.analysis,
+            sender: "ai",
+            timestamp: new Date(),
+          },
+        ]);
       }
     } catch (error) {
-      console.error('Failed to start chat:', error);
-      const errorMessage = error.response?.data?.error || '申し訳ございません。チャットの開始に失敗しました。';
-      setMessages([{
-        id: crypto.randomUUID(),
-        text: errorMessage,
-        sender: 'ai',
-        timestamp: new Date()
-      }]);
-      
+      console.error("Failed to start chat:", error);
+      const errorMessage =
+        error.response?.data?.error ||
+        "申し訳ございません。チャットの開始に失敗しました。";
+      setMessages([
+        {
+          id: crypto.randomUUID(),
+          text: errorMessage,
+          sender: "ai",
+          timestamp: new Date(),
+        },
+      ]);
+
       // 503エラーの場合は自動リトライ
       if (error.response?.data?.details === 503) {
         setTimeout(() => {
-          setMessages(prev => [...prev, {
-            id: crypto.randomUUID(),
-            text: '再接続を試みています...',
-            sender: 'ai',
-            timestamp: new Date()
-          }]);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              text: "再接続を試みています...",
+              sender: "ai",
+              timestamp: new Date(),
+            },
+          ]);
           startChat();
         }, 3000);
       }
@@ -93,36 +108,38 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
     const userMessage = {
       id: crypto.randomUUID(),
       text: inputValue,
-      sender: 'user',
-      timestamp: new Date()
+      sender: "user",
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
     setIsLoading(true);
 
     try {
       const response = await chatAPI.sendMessage(inputValue);
-      
+
       if (response.success) {
         const aiResponse = {
           id: crypto.randomUUID(),
           text: response.data.response,
-          sender: 'ai',
-          timestamp: new Date()
+          sender: "ai",
+          timestamp: new Date(),
         };
-        setMessages(prev => [...prev, aiResponse]);
+        setMessages((prev) => [...prev, aiResponse]);
       }
     } catch (error) {
-      console.error('Failed to send message:', error);
-      const errorText = error.response?.data?.error || 'メッセージの送信に失敗しました。もう一度お試しください。';
+      console.error("Failed to send message:", error);
+      const errorText =
+        error.response?.data?.error ||
+        "メッセージの送信に失敗しました。もう一度お試しください。";
       const errorMessage = {
         id: crypto.randomUUID(),
         text: errorText,
-        sender: 'ai',
-        timestamp: new Date()
+        sender: "ai",
+        timestamp: new Date(),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -134,39 +151,40 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
       setMessages([]);
       setChatStarted(false);
       setChatInitialized(false);
-      setInputValue('');
+      setInputValue("");
     } catch (error) {
-      console.error('Failed to reset chat:', error);
+      console.error("Failed to reset chat:", error);
     }
   };
 
   return (
-    <Paper 
+    <Paper
       elevation={3}
-      sx={{ 
-        height: '100%', // ビューポートに合わせて調整
-        display: 'flex', 
-        flexDirection: 'column',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%)',
-        backdropFilter: 'blur(10px)',
+      sx={{
+        height: "100%", // ビューポートに合わせて調整
+        display: "flex",
+        flexDirection: "column",
+        background:
+          "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%)",
+        backdropFilter: "blur(10px)",
         borderRadius: 3,
-        overflow: 'hidden'
+        overflow: "hidden",
       }}
     >
       {/* Header - 圧縮された固定高さ */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           p: 2, // 3 → 2 に圧縮
-          color: 'white',
+          color: "white",
           flexShrink: 0, // ヘッダーのサイズを固定
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Avatar
             sx={{
-              background: 'rgba(255,255,255,0.2)',
-              backdropFilter: 'blur(10px)',
+              background: "rgba(255,255,255,0.2)",
+              backdropFilter: "blur(10px)",
               width: 40, // 48 → 40 に圧縮
               height: 40, // 48 → 40 に圧縮
             }}
@@ -174,21 +192,25 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
             <Psychology />
           </Avatar>
           <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}> {/* h6 → subtitle1 に圧縮 */}
-              AIマーケティングアシスタント
+            <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+              {" "}
+              {/* h6 → subtitle1 に圧縮 */}
+              AI Marketing Assistant
             </Typography>
-            <Typography variant="caption" sx={{ opacity: 0.9 }}> {/* body2 → caption に圧縮 */}
-              データドリブンなアドバイスを提供
+            <Typography variant="caption" sx={{ opacity: 0.9 }}>
+              {" "}
+              {/* body2 → caption に圧縮 */}
+              客観的なデータで、ご納得いただけるアドバイスを提供します。
             </Typography>
           </Box>
           {chatStarted && (
             <IconButton
               onClick={resetChat}
               sx={{
-                color: 'white',
-                background: 'rgba(255,255,255,0.2)',
-                '&:hover': {
-                  background: 'rgba(255,255,255,0.3)',
+                color: "white",
+                background: "rgba(255,255,255,0.2)",
+                "&:hover": {
+                  background: "rgba(255,255,255,0.3)",
                 },
               }}
               title="チャットをリセット"
@@ -203,48 +225,54 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
       <Box
         sx={{
           flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
+          overflowY: "auto",
+          overflowX: "hidden",
           p: 2,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           gap: 2,
           minHeight: 0, // フレックスアイテムが適切に縮小されるように
           // カスタムスクロールバー
-          '&::-webkit-scrollbar': {
-            width: '6px',
+          "&::-webkit-scrollbar": {
+            width: "6px",
           },
-          '&::-webkit-scrollbar-track': {
-            background: 'rgba(0,0,0,0.1)',
-            borderRadius: '10px',
+          "&::-webkit-scrollbar-track": {
+            background: "rgba(0,0,0,0.1)",
+            borderRadius: "10px",
           },
-          '&::-webkit-scrollbar-thumb': {
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: '10px',
+          "&::-webkit-scrollbar-thumb": {
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            borderRadius: "10px",
           },
-          '&::-webkit-scrollbar-thumb:hover': {
-            background: 'linear-gradient(135deg, #5a72e3 0%, #6d4498 100%)',
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "linear-gradient(135deg, #5a72e3 0%, #6d4498 100%)",
           },
         }}
       >
         {!chatInitialized ? (
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '100%',
-            flexDirection: 'column',
-            gap: 3
-          }}>
-            <SmartToy sx={{ fontSize: 60, color: 'primary.main' }} />
-            <Typography variant="h6" align="center" sx={{ fontWeight: 'bold' }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%",
+              flexDirection: "column",
+              gap: 3,
+            }}
+          >
+            <SmartToy sx={{ fontSize: 60, color: "primary.main" }} />
+            <Typography variant="h6" align="center" sx={{ fontWeight: "bold" }}>
               AI分析を開始
             </Typography>
-            <Typography variant="body2" color="text.secondary" align="center" sx={{ maxWidth: 300 }}>
-              {selectedAppId 
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              align="center"
+              sx={{ maxWidth: 300 }}
+            >
+              {selectedAppId
                 ? `アプリ「${selectedAppId}」の包括的データ（LTV・売上推移・顧客属性）を分析します。`
-                : 'デモ用のサンプルデータを使用してAI分析を開始します。'
-              }
+                : "デモ用のサンプルデータを使用してAI分析を開始します。"}
               AIが初期分析を提供した後、質問できるようになります。
             </Typography>
             <Button
@@ -254,24 +282,27 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
               disabled={isLoading}
               startIcon={<Psychology />}
               sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #5a72e3 0%, #6d4498 100%)',
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                "&:hover": {
+                  background:
+                    "linear-gradient(135deg, #5a72e3 0%, #6d4498 100%)",
                 },
               }}
             >
-              {isLoading ? '初期化中...' : 'チャットを開始'}
+              {isLoading ? "初期化中..." : "チャットを開始"}
             </Button>
           </Box>
         ) : !chatStarted && isLoading ? (
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '100%',
-            flexDirection: 'column',
-            gap: 2
-          }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
             <CircularProgress size={40} />
             <Typography variant="body2" color="text.secondary">
               チャットを初期化中...
@@ -279,98 +310,120 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
           </Box>
         ) : (
           messages.map((message) => (
+            <Box
+              key={message.id}
+              sx={{
+                display: "flex",
+                justifyContent:
+                  message.sender === "user" ? "flex-end" : "flex-start",
+                alignItems: "flex-start",
+                gap: 1,
+              }}
+            >
+              {message.sender === "ai" && (
+                <Avatar
+                  sx={{
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    width: 32,
+                    height: 32,
+                  }}
+                >
+                  <SmartToy fontSize="small" />
+                </Avatar>
+              )}
+
+              <Box
+                sx={{
+                  maxWidth: message.sender === "ai" ? "95%" : "75%",
+                  animation:
+                    message.sender === "ai" ? "fadeIn 0.5s ease-in" : "none",
+                  "@keyframes fadeIn": {
+                    "0%": { opacity: 0, transform: "translateY(10px)" },
+                    "100%": { opacity: 1, transform: "translateY(0)" },
+                  },
+                }}
+              >
+                {message.sender === "ai" ? (
+                  <Box sx={{ width: "100%" }}>
+                    <AIMessageRenderer content={message.text} />
+                  </Box>
+                ) : (
+                  <Paper
+                    elevation={1}
+                    sx={{
+                      p: 2,
+                      background:
+                        "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      color: "white",
+                      borderRadius: 3,
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+                      {message.text}
+                    </Typography>
+                  </Paper>
+                )}
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    display: "block",
+                    mt: 0.5,
+                    px: 1,
+                    textAlign: message.sender === "user" ? "right" : "left",
+                  }}
+                >
+                  {message.timestamp.toLocaleTimeString("ja-JP", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Typography>
+              </Box>
+
+              {message.sender === "user" && (
+                <Avatar
+                  sx={{
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    width: 32,
+                    height: 32,
+                  }}
+                >
+                  <Person fontSize="small" />
+                </Avatar>
+              )}
+            </Box>
+          ))
+        )}
+
+        {isLoading && messages.length > 0 && (
           <Box
-            key={message.id}
             sx={{
-              display: 'flex',
-              justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start',
-              alignItems: 'flex-start',
+              display: "flex",
+              justifyContent: "flex-start",
+              alignItems: "center",
               gap: 1,
             }}
           >
-            {message.sender === 'ai' && (
-              <Avatar
-                sx={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  width: 32,
-                  height: 32,
-                }}
-              >
-                <SmartToy fontSize="small" />
-              </Avatar>
-            )}
-            
-            <Box sx={{ 
-              maxWidth: message.sender === 'ai' ? '95%' : '75%',
-              animation: message.sender === 'ai' ? 'fadeIn 0.5s ease-in' : 'none',
-              '@keyframes fadeIn': {
-                '0%': { opacity: 0, transform: 'translateY(10px)' },
-                '100%': { opacity: 1, transform: 'translateY(0)' }
-              }
-            }}>
-              {message.sender === 'ai' ? (
-                <Box sx={{ width: '100%' }}>
-                  <AIMessageRenderer content={message.text} />
-                </Box>
-              ) : (
-                <Paper
-                  elevation={1}
-                  sx={{
-                    p: 2,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    borderRadius: 3,
-                  }}
-                >
-                  <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                    {message.text}
-                  </Typography>
-                </Paper>
-              )}
-              <Typography 
-                variant="caption" 
-                color="text.secondary" 
-                sx={{ 
-                  display: 'block', 
-                  mt: 0.5, 
-                  px: 1,
-                  textAlign: message.sender === 'user' ? 'right' : 'left'
-                }}
-              >
-                {message.timestamp.toLocaleTimeString('ja-JP', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </Typography>
-            </Box>
-
-            {message.sender === 'user' && (
-              <Avatar
-                sx={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  width: 32,
-                  height: 32,
-                }}
-              >
-                <Person fontSize="small" />
-              </Avatar>
-            )}
-          </Box>
-          ))
-        )}
-        
-        {isLoading && messages.length > 0 && (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
             <Avatar
               sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 width: 32,
                 height: 32,
               }}
             >
               <SmartToy fontSize="small" />
             </Avatar>
-            <Paper elevation={1} sx={{ p: 2, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+            <Paper
+              elevation={1}
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
               <CircularProgress size={20} />
             </Paper>
           </Box>
@@ -379,18 +432,18 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
       </Box>
 
       <Divider />
-      
+
       {/* Input - 固定高さ */}
       <Box
         component="form"
         onSubmit={handleSubmit}
         sx={{
           p: 2,
-          display: 'flex',
+          display: "flex",
           gap: 1,
-          alignItems: 'flex-end',
-          background: 'rgba(255,255,255,0.8)',
-          backdropFilter: 'blur(5px)',
+          alignItems: "flex-end",
+          background: "rgba(255,255,255,0.8)",
+          backdropFilter: "blur(5px)",
           flexShrink: 0, // 入力エリアのサイズを固定
         }}
       >
@@ -405,9 +458,9 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
           variant="outlined"
           size="small"
           sx={{
-            '& .MuiOutlinedInput-root': {
+            "& .MuiOutlinedInput-root": {
               borderRadius: 3,
-              background: 'white',
+              background: "white",
             },
           }}
         />
@@ -415,14 +468,14 @@ export const ChatForm = ({ selectedAppId, selectedPeriod }) => {
           type="submit"
           disabled={!inputValue.trim() || isLoading || !chatInitialized}
           sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #5a72e3 0%, #6d4498 100%)',
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white",
+            "&:hover": {
+              background: "linear-gradient(135deg, #5a72e3 0%, #6d4498 100%)",
             },
-            '&.Mui-disabled': {
-              background: 'rgba(0,0,0,0.12)',
-              color: 'rgba(0,0,0,0.26)',
+            "&.Mui-disabled": {
+              background: "rgba(0,0,0,0.12)",
+              color: "rgba(0,0,0,0.26)",
             },
           }}
         >
